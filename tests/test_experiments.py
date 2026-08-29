@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from adaptive_router.experiments import ExperimentRunner
+from adaptive_router.experiments import ExperimentRunner, run_frozen_benchmark
 from adaptive_router.routing import LinUCBPolicy, StaticPolicy
 
 
@@ -26,6 +26,22 @@ class Strategy:
 class Evaluator:
     def evaluate(self, task, result):
         return SimpleNamespace(quality=result.quality, passed=result.quality == 1, grader_type="mock")
+
+
+def test_frozen_benchmark_runs_each_strategy_on_all_seed_tasks(tmp_path):
+    from adaptive_router.models import load_seed_dataset
+    from adaptive_router.persistence import JSONLRecorder
+
+    tasks = load_seed_dataset("data/seed_tasks.json").tasks
+    strategies = {name: Strategy(name, 1) for name in ("direct", "strong", "tool")}
+    result = run_frozen_benchmark(
+        "data/seed_tasks.json",
+        strategies,
+        recorder=JSONLRecorder(tmp_path / "benchmark.jsonl"),
+    )
+
+    assert len(result["records"]) == len(tasks) * len(strategies)
+    assert len((tmp_path / "benchmark.jsonl").read_text().splitlines()) == 36
 
 
 def test_replay_is_seeded_and_updates_selected_action_only():

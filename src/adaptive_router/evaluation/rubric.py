@@ -1,3 +1,4 @@
+import json
 from typing import Any, Protocol
 
 from adaptive_router.models import (
@@ -12,6 +13,33 @@ from adaptive_router.models import (
 class RubricJudge(Protocol):
     def evaluate(self, request: RubricJudgeRequest) -> RubricJudgeResponse:
         """Return one anchored score from 0 through 4 per rubric dimension."""
+
+
+class ProviderRubricJudge:
+    """Adapt a provider completion into the blind structured judge contract."""
+
+    def __init__(self, provider: Any, model: str) -> None:
+        if not model:
+            raise ValueError("model must be non-empty")
+        self.provider = provider
+        self.model = model
+
+    def evaluate(self, request: RubricJudgeRequest) -> RubricJudgeResponse:
+        dimensions = ", ".join(request.rubric.dimensions)
+        prompt = (
+            "Score the answer against the rubric. Return only JSON with a scores object "
+            "containing one integer from 0 through 4 for each dimension and optional feedback.\n"
+            f"Dimensions: {dimensions}\nPrompt: {request.prompt}\nAnswer: {request.answer}\n"
+            f"Rubric guidance: {json.dumps(request.rubric.guidance, sort_keys=True)}"
+        )
+        response = self.provider.complete(prompt, model=self.model)
+        if response.text is None:
+            raise ValueError("rubric judge returned no response")
+        try:
+            payload = json.loads(response.text)
+        except json.JSONDecodeError as exc:
+            raise ValueError("rubric judge returned invalid JSON") from exc
+        return RubricJudgeResponse.model_validate(payload)
 
 
 class RubricEvaluator:

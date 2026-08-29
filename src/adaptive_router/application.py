@@ -278,7 +278,7 @@ def build_service(settings: Any | None = None) -> ApplicationService:
     from adaptive_router.agents import DirectStrategy, StrongStrategy, ToolStrategy
     from adaptive_router.providers import MockProvider, OpenAICompatibleProvider
     from adaptive_router.models import MockRubricJudge
-    from adaptive_router.evaluation import RubricEvaluator
+    from adaptive_router.evaluation import ProviderRubricJudge, RubricEvaluator
 
     settings = settings or Settings.from_env()
     provider = (
@@ -296,8 +296,8 @@ def build_service(settings: Any | None = None) -> ApplicationService:
         EvaluationType.EXACT.value: ExactEvaluator(),
         EvaluationType.STRUCTURED.value: StructuredEvaluator(),
     }
-    if settings.mock_mode:
-        evaluators[EvaluationType.RUBRIC.value] = RubricEvaluator(MockRubricJudge())
+    judge = MockRubricJudge() if settings.mock_mode else ProviderRubricJudge(provider, settings.strong_model)
+    evaluators[EvaluationType.RUBRIC.value] = RubricEvaluator(judge)
     return ApplicationService(
         policy=CategoryPolicy(),
         strategies=strategies,

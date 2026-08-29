@@ -5,6 +5,7 @@ from adaptive_router.evaluation import (
     ExactEvaluator,
     NumericEvaluator,
     RubricEvaluator,
+    ProviderRubricJudge,
     StructuredEvaluator,
 )
 from adaptive_router.models import (
@@ -122,6 +123,31 @@ def test_rubric_evaluator_weights_scores_and_keeps_judge_blind() -> None:
 
     request = RubricJudgeRequest(prompt="p", answer="a", rubric=rubric)
     assert set(request.model_dump()) == {"prompt", "answer", "rubric"}
+
+
+def test_provider_rubric_judge_returns_structured_scores_without_strategy_metadata() -> None:
+    class Provider:
+        def __init__(self) -> None:
+            self.prompt = ""
+
+        def complete(self, prompt, *, model):
+            self.prompt = prompt
+            from adaptive_router.providers.base import CompletionResponse
+
+            return CompletionResponse(
+                text='{"scores":{"clarity":4},"feedback":"clear"}',
+                input_tokens=1,
+                output_tokens=1,
+            )
+
+    provider = Provider()
+    rubric = EvaluationRubric(dimensions={"clarity": 1.0})
+    result = ProviderRubricJudge(provider, "judge").evaluate(
+        RubricJudgeRequest(prompt="Explain", answer="An answer", rubric=rubric)
+    )
+
+    assert result.scores == {"clarity": 4}
+    assert "strategy" not in provider.prompt
 
 
 def test_rubric_judge_response_rejects_unanchored_scores() -> None:
