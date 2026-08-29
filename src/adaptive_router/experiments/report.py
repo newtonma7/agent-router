@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping, cast
 
 from adaptive_router.persistence import load_records
 
 
 def _records(source: Iterable[Mapping[str, Any]] | str | Path | Any) -> list[Mapping[str, Any]]:
     if isinstance(source, (str, Path)):
-        return load_records(source)
+        return cast(list[Mapping[str, Any]], load_records(source))
     if hasattr(source, "records"):
         return list(source.records)
     return list(source)

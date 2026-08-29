@@ -41,7 +41,8 @@ class StructuredEvaluator:
             raise ValueError("StructuredEvaluator requires a structured task")
         expected_leaves = dict(_leaves(task.expected_answer))
         try:
-            actual_leaves = dict(_leaves(_parse_json(answer)))
+            parsed = _parse_json(answer)
+            actual_leaves = dict(_leaves(parsed))
         except (json.JSONDecodeError, TypeError, ValueError) as exc:
             return EvaluationResult(
                 quality=0.0,
@@ -56,10 +57,18 @@ class StructuredEvaluator:
         )
         total = len(expected_leaves)
         quality = correct / total if total else 0.0
+        exact_keys = bool(re.search(r"\bexactly\s+(?:those|the requested|these)\s+keys\b", task.prompt, re.I))
+        has_extra_keys = (
+            exact_keys
+            and isinstance(parsed, dict)
+            and isinstance(task.expected_answer, dict)
+            and set(parsed) != set(task.expected_answer)
+        )
+        passed = correct == total and not has_extra_keys
         return EvaluationResult(
             quality=quality,
-            passed=correct == total,
+            passed=passed,
             grader_type="structured",
             component_scores={"correct_fields": float(correct), "total_fields": float(total)},
-            feedback=None if correct == total else f"{correct} of {total} required fields matched",
+            feedback=None if passed else f"{correct} of {total} required fields matched",
         )

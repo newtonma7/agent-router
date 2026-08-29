@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from adaptive_router.evaluation import ExactEvaluator, NumericEvaluator, StructuredEvaluator
 from adaptive_router.features import extract_features
-from adaptive_router.models import AgentResult, EvaluationResult, EvaluationType, Task
+from adaptive_router.models import AgentResult, AgentStrategy, EvaluationResult, EvaluationType, Task
 from adaptive_router.persistence import JSONLRecorder, RunRecord
 from adaptive_router.routing import CategoryPolicy
 from adaptive_router.routing.base import action_name
@@ -51,15 +51,6 @@ class InferenceResponse(BaseModel):
     error: str | None = None
 
 
-class InferenceRequest(BaseModel):
-    """Optional nested request form; direct ``Task`` bodies are also accepted."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    task: Task
-    evaluate: bool = False
-
-
 def _lookup(mapping: Mapping[Any, Any], key: Any) -> Any:
     wanted = action_name(key)
     for candidate, value in mapping.items():
@@ -87,7 +78,7 @@ def _call_strategy(strategy: Any, task: Task) -> Any:
 def _typed_failure(task: Task, action: str, started: float, error: Exception) -> AgentResult:
     return AgentResult(
         task_id=task.id,
-        strategy=action,
+        strategy=AgentStrategy(action),
         answer=None,
         latency_seconds=max(0.0, time.perf_counter() - started),
         input_tokens=None,
@@ -225,6 +216,7 @@ class ApplicationService:
             policy=str(self.policy_name),
             context=context,
             action=action,
+            strategy=action,
             category=task.category.value,
             answer=result.answer,
             evaluation=evaluation,
@@ -322,7 +314,6 @@ create_service = build_service
 
 __all__ = [
     "ApplicationService",
-    "InferenceRequest",
     "InferenceResponse",
     "ServiceError",
     "build_service",

@@ -6,7 +6,7 @@ import ast
 import json
 import math
 import operator
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from adaptive_router.models.agent_result import AgentStrategy
@@ -23,7 +23,9 @@ class ToolExecutionError(RuntimeError):
         self.tool_calls = calls
 
 
-_BINARY_OPERATORS = {
+_BINARY_OPERATORS: dict[
+    type[ast.operator], Callable[[int | float, int | float], int | float]
+] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
@@ -31,7 +33,10 @@ _BINARY_OPERATORS = {
     ast.Mod: operator.mod,
     ast.Pow: operator.pow,
 }
-_UNARY_OPERATORS = {ast.UAdd: operator.pos, ast.USub: operator.neg}
+_UNARY_OPERATORS: dict[type[ast.unaryop], Callable[[int | float], int | float]] = {
+    ast.UAdd: operator.pos,
+    ast.USub: operator.neg,
+}
 
 
 def calculate(expression: str) -> int | float:

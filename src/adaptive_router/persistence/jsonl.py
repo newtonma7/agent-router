@@ -34,6 +34,7 @@ class RunRecord:
     policy: str
     context: tuple[float, ...] | list[float]
     action: str
+    strategy: str | None = None
     category: str | None = None
     answer: Any = None
     evaluation: Any = None

@@ -17,7 +17,11 @@ class ExactEvaluator:
 
         expected = normalize_answer(task.expected_answer)
         actual_text = normalize_answer(answer)
-        match = re.search(r"\b(yes|no)\b", actual_text)
+        match = re.search(
+            r"(?:^|[.!?\n])\s*(?:(?:the )?(?:answer|conclusion)\s*(?:is|:)\s*)?"
+            r"(yes|no)\b",
+            actual_text,
+        )
         if expected in {"yes", "no"}:
             correct = match is not None and match.group(1) == expected
         else:

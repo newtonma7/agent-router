@@ -52,6 +52,59 @@ def test_replay_persists_run_identity_and_configuration():
     assert result.records[0]["configuration"]["trial"] == 2
 
 
+def test_replay_uses_agent_answer_for_builtin_evaluator():
+    from adaptive_router.evaluation import ExactEvaluator
+    from adaptive_router.models import Task
+
+    task = Task(
+        id="R1",
+        prompt="Can Zed be a tal? Answer yes or no.",
+        category="reasoning",
+        evaluation_type="exact",
+        expected_answer="direct",
+    )
+    strategy = Strategy("direct", 1)
+    result = ExperimentRunner(
+        {"direct": strategy, "strong": strategy, "tool": strategy},
+        ExactEvaluator(),
+    ).run([task], StaticPolicy("direct"))
+
+    assert result.records[0]["evaluation"]["passed"] is True
+
+
+def test_replay_computes_hindsight_regret_from_available_strategies():
+    task = SimpleNamespace(id="a", category="arithmetic", prompt="2 + 2")
+    strategies = {
+        "direct": Strategy("direct", 0.4),
+        "strong": Strategy("strong", 1.0),
+        "tool": Strategy("tool", 0.8),
+    }
+    result = ExperimentRunner(strategies, Evaluator()).run(
+        [task],
+        StaticPolicy("direct"),
+        oracle_candidates={
+            "a": [
+                {"quality": 0.4, "passed": False, "cost_usd": 0.01, "latency_seconds": 0.01},
+                {"quality": 1.0, "passed": True, "cost_usd": 0.01, "latency_seconds": 0.01},
+            ]
+        },
+    )
+
+    assert result.cumulative_regret > 0
+    assert result.records[0]["regret"] > 0
+
+
+def test_replay_policy_randomness_is_seeded_by_run_seed():
+    from adaptive_router.routing import RandomPolicy
+
+    tasks = [SimpleNamespace(id=str(i), category="arithmetic", prompt="2 + 2") for i in range(12)]
+    strategies = {name: Strategy(name, 1) for name in ("direct", "strong", "tool")}
+    first = ExperimentRunner(strategies).run(tasks, RandomPolicy(seed=1), seed=42)
+    second = ExperimentRunner(strategies).run(tasks, RandomPolicy(seed=99), seed=42)
+
+    assert [row["action"] for row in first.records] == [row["action"] for row in second.records]
+
+
 def test_reports_include_aggregate_task_and_category_metrics():
     from adaptive_router.experiments import aggregate_report, category_report, task_report
 

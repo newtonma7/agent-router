@@ -2,7 +2,6 @@
 
 from .application import (
     ApplicationService,
-    InferenceRequest,
     InferenceResponse,
     ServiceError,
     build_service,
@@ -26,7 +25,6 @@ from .models import (
 
 __all__ = [
     "ApplicationService",
-    "InferenceRequest",
     "InferenceResponse",
     "ServiceError",
     "build_service",

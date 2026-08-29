@@ -63,6 +63,11 @@ def test_exact_evaluator_grades_conclusion_not_explanation() -> None:
     assert not ExactEvaluator().evaluate(task(EvaluationType.EXACT, "No"), "Yes").passed
 
 
+def test_exact_evaluator_ignores_yes_or_no_inside_prior_explanation() -> None:
+    answer = "It cannot be yes. No, because no mavens are tals."
+    assert ExactEvaluator().evaluate(task(EvaluationType.EXACT, "No"), answer).passed
+
+
 def test_structured_evaluator_reports_partial_credit_and_full_pass() -> None:
     evaluator = StructuredEvaluator()
     benchmark_task = task(
@@ -80,6 +85,23 @@ def test_structured_evaluator_reports_partial_credit_and_full_pass() -> None:
     malformed = evaluator.evaluate(benchmark_task, "not json")
     assert malformed.quality == 0
     assert not malformed.passed
+
+
+def test_structured_evaluator_honors_exact_keys_instruction() -> None:
+    extraction_task = Task(
+        id="S1",
+        prompt="Extract name and plan. Return valid JSON with exactly those keys.",
+        category=TaskCategory.EXTRACTION,
+        evaluation_type=EvaluationType.STRUCTURED,
+        expected_answer={"name": "Maya", "plan": "Enterprise"},
+    )
+
+    result = StructuredEvaluator().evaluate(
+        extraction_task,
+        '{"name":"Maya","plan":"Enterprise","extra":"ignored"}',
+    )
+    assert result.quality == 1.0
+    assert result.passed is False
 
 
 def test_rubric_evaluator_weights_scores_and_keeps_judge_blind() -> None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import random
+import time
 import uuid
 from types import SimpleNamespace
 from dataclasses import dataclass, field
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 from adaptive_router.features import extract_features
 from adaptive_router.persistence import JSONLRecorder, RunRecord
-from adaptive_router.routing.reward import calculate_reward, hindsight_oracle, reward_from
+from adaptive_router.routing.reward import calculate_reward, hindsight_oracle
 
 
 def _get(value: Any, name: str, default: Any = None) -> Any:
@@ -46,11 +47,11 @@ def _call_strategy(strategy: Any, task: Any) -> Any:
     return method(task)
 
 
-def _failure_result(task: Any, action: str, error: Exception) -> Any:
+def _failure_result(task: Any, action: str, error: Exception, latency_seconds: float) -> Any:
     return SimpleNamespace(
         task_id=str(_get(task, "id", "")), strategy=action, answer=None,
-        latency_seconds=0.0, input_tokens=0, output_tokens=0,
-        estimated_cost_usd=0.0, tool_calls=0, error=f"{type(error).__name__}: {error}", quality=0.0,
+        latency_seconds=max(0.0, latency_seconds), input_tokens=None, output_tokens=None,
+        estimated_cost_usd=None, tool_calls=0, error=f"{type(error).__name__}: {error}", quality=0.0,
     )
 
 
@@ -60,11 +61,11 @@ def _call_evaluator(evaluator: Any, task: Any, result: Any) -> Any:
     method = getattr(evaluator, "evaluate", evaluator)
     try:
         parameters = list(inspect.signature(method).parameters.values())
-        if parameters and parameters[0].name in {"result", "agent_result", "response"}:
-            return method(result, task)
+        if len(parameters) >= 2 and parameters[1].name in {"result", "agent_result", "response"}:
+            return method(task, result)
     except (TypeError, ValueError):
         pass
-    return method(task, result)
+    return method(task, _record_value(result, "answer", result))
 
 
 def _record_value(result: Any, name: str, default: Any = None) -> Any:
@@ -127,6 +128,9 @@ class ExperimentRunner:
         ordered_tasks = list(tasks)
         if seed is not None:
             random.Random(seed).shuffle(ordered_tasks)
+            policy_rng = getattr(policy, "rng", None)
+            if policy_rng is not None and hasattr(policy_rng, "seed"):
+                policy_rng.seed(seed)
         run_id = run_id or str(uuid.uuid4())
         config = {**self.reward_config, **dict(configuration or {}), "seed": seed}
         records: list[dict[str, Any]] = []
@@ -136,15 +140,28 @@ class ExperimentRunner:
         for task in ordered_tasks:
             context = tuple(float(value) for value in self.feature_extractor(task))
             action = _name(policy.select(context))
+            started = time.perf_counter()
             try:
                 result = _call_strategy(_strategy(self.strategies, action), task)
             except Exception as error:
-                result = _failure_result(task, action, error)
+                result = _failure_result(task, action, error, time.perf_counter() - started)
             evaluation = _call_evaluator(self.evaluator, task, result)
-            if evaluation is None:
-                reward = calculate_reward(float(_record_value(result, "quality", 0.0)), _record_value(result, "estimated_cost_usd", 0.0), _record_value(result, "latency_seconds", 0.0), **self.reward_config)
-            else:
-                reward = reward_from(result, evaluation, **self.reward_config)
+            cost = _record_value(result, "estimated_cost_usd", 0.0) or 0.0
+            reward = (
+                calculate_reward(
+                    float(_record_value(evaluation, "quality", _record_value(result, "quality", 0.0))),
+                    cost,
+                    _record_value(result, "latency_seconds", 0.0) or 0.0,
+                    **self.reward_config,
+                )
+                if evaluation is None
+                else calculate_reward(
+                    float(_get(evaluation, "quality", 0.0)),
+                    cost,
+                    _record_value(result, "latency_seconds", 0.0) or 0.0,
+                    **self.reward_config,
+                )
+            )
             policy.update(context, action, reward.reward)
             cumulative_reward += reward.reward
 
@@ -167,6 +184,7 @@ class ExperimentRunner:
                 policy=str(policy_name),
                 context=context,
                 action=action,
+                strategy=action,
                 category=_name(_get(task, "category", "")),
                 answer=_record_value(result, "answer"),
                 evaluation=evaluation,

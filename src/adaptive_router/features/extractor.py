@@ -11,7 +11,20 @@ if TYPE_CHECKING:
 
 CATEGORY_ORDER = ("arithmetic", "reasoning", "explanation", "extraction")
 _NUMBER = re.compile(r"(?<![A-Za-z])[-+]?(?:\d+\.\d+|\d+(?:,\d{3})*)(?:%\b)?")
-_FIELD = re.compile(r"(?:fields?|keys?|columns?)\s*(?:are|:|=)?\s*([A-Za-z][\w]*(?:\s*,\s*[A-Za-z][\w]*)+)", re.I)
+_FIELD = re.compile(
+    r"(?:fields?|keys?|columns?)\s*(?:are|:|=)?\s*"
+    r"([A-Za-z_][\w]*(?:\s*,\s*(?:and\s+)?[A-Za-z_][\w]*)+)",
+    re.I,
+)
+_OBJECT_FIELDS = re.compile(
+    r"(?:objects?|records?)\s+(?:contain|include|have)\s+"
+    r"([A-Za-z_][\w]*(?:\s*,\s*(?:and\s+)?[A-Za-z_][\w]*)+)",
+    re.I,
+)
+_EXTRACT_FIELDS = re.compile(
+    r"(?:extract|return)\s+([A-Za-z_][\w]*(?:\s*,\s*(?:and\s+)?[A-Za-z_][\w]*)+)\s+from\b",
+    re.I,
+)
 
 
 def _value(value: Any) -> str:
@@ -24,10 +37,17 @@ def _task_value(task: Any, name: str, default: Any = None) -> Any:
     return getattr(task, name, default)
 
 
+def _list_count(value: str) -> int:
+    return sum(1 for item in value.split(",") if item.strip().removeprefix("and ").strip())
+
+
 def _requested_fields(prompt: str) -> int:
     """Count fields explicitly requested in a prompt, without reading answers."""
     quoted = re.findall(r"[`\"]([A-Za-z_][\w -]*)[`\"]", prompt)
-    listed = sum(len(match.split(",")) for match in _FIELD.findall(prompt))
+    listed = sum(
+        _list_count(match)
+        for match in (*_FIELD.findall(prompt), *_OBJECT_FIELDS.findall(prompt), *_EXTRACT_FIELDS.findall(prompt))
+    )
     return max(len(quoted), listed)
 
 

@@ -1,6 +1,6 @@
 from adaptive_router.application import ApplicationService, build_service
 from adaptive_router.config import Settings
-from adaptive_router.models import AgentResult, EvaluationType, Task
+from adaptive_router.models import AgentResult, EvaluationType, Task, TaskCategory
 from adaptive_router.persistence import JSONLRecorder, load_records
 from adaptive_router.routing import StaticPolicy
 from adaptive_router.evaluation.numeric import NumericEvaluator
@@ -10,7 +10,7 @@ def numeric_task() -> Task:
     return Task(
         id="A1",
         prompt="What is 2 + 2?",
-        category="arithmetic",
+        category=TaskCategory.ARITHMETIC,
         evaluation_type=EvaluationType.NUMERIC,
         expected_answer=4,
     )
@@ -19,7 +19,7 @@ def numeric_task() -> Task:
 class RecordingPolicy(StaticPolicy):
     def __init__(self) -> None:
         super().__init__("direct")
-        self.contexts = []
+        self.contexts: list[tuple[float, ...]] = []
 
     def select(self, context=None):
         self.contexts.append(tuple(context or ()))

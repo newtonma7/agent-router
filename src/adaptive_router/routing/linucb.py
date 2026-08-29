@@ -69,12 +69,14 @@ class LinUCBPolicy(Policy):
             raise ValueError("LinUCB requires a non-empty feature vector")
         if self.n_features is None:
             self.n_features = len(x)
-        if len(x) != self.n_features:
-            raise ValueError(f"expected {self.n_features} features, got {len(x)}")
+        n_features = self.n_features
+        assert n_features is not None
+        if len(x) != n_features:
+            raise ValueError(f"expected {n_features} features, got {len(x)}")
         if not self._matrices:
-            identity = [[self.regularization if row == column else 0.0 for column in range(self.n_features)] for row in range(self.n_features)]
+            identity = [[self.regularization if row == column else 0.0 for column in range(n_features)] for row in range(n_features)]
             self._matrices = {action: [row[:] for row in identity] for action in self.actions}
-            self._vectors = {action: [0.0] * self.n_features for action in self.actions}
+            self._vectors = {action: [0.0] * n_features for action in self.actions}
         return x
 
     def select(self, context: Sequence[float] | None = None) -> str:
@@ -85,7 +87,9 @@ class LinUCBPolicy(Policy):
         scores = {}
         for action in self.actions:
             theta = _solve(self._matrices[action], self._vectors[action])
-            confidence = math.sqrt(max(0.0, sum(left * right for left, right in zip(x, _solve(self._matrices[action], x)))))
+            confidence = math.sqrt(
+                max(0.0, sum(left * right for left, right in zip(x, _solve(self._matrices[action], list(x)))))
+            )
             scores[action] = sum(a * b for a, b in zip(theta, x)) + self.alpha * confidence
         return max(self.actions, key=lambda action: (scores[action], -self.actions.index(action)))
 
@@ -101,8 +105,10 @@ class LinUCBPolicy(Policy):
             raise ValueError("LinUCB.update requires the selected context")
         x = self._ensure_dimension(context)
         matrix = self._matrices[name]
-        for row in range(self.n_features):
-            for column in range(self.n_features):
+        n_features = self.n_features
+        assert n_features is not None
+        for row in range(n_features):
+            for column in range(n_features):
                 matrix[row][column] += x[row] * x[column]
         for i, value in enumerate(x):
             self._vectors[name][i] += reward_value * value
