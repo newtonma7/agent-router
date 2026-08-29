@@ -61,7 +61,11 @@ class MockProvider:
             configured = self._responses.get(prompt, self._response)
 
         if configured is None:
-            return CompletionResponse(text=f"mock: {prompt}")
+            return CompletionResponse(
+                text=f"mock: {prompt}",
+                input_tokens=self._input_tokens,
+                output_tokens=self._output_tokens,
+            )
         if isinstance(configured, CompletionResponse):
             return configured
         return CompletionResponse(

@@ -1,5 +1,13 @@
 """Adaptive agent router package."""
 
+from .application import (
+    ApplicationService,
+    InferenceRequest,
+    InferenceResponse,
+    ServiceError,
+    build_service,
+    create_service,
+)
 from .config import Settings, SettingsError
 from .models import (
     AgentResult,
@@ -17,6 +25,12 @@ from .models import (
 )
 
 __all__ = [
+    "ApplicationService",
+    "InferenceRequest",
+    "InferenceResponse",
+    "ServiceError",
+    "build_service",
+    "create_service",
     "AgentResult",
     "AgentStrategy",
     "EvaluationResult",
