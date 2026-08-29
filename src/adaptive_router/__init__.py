@@ -1,3 +1,6 @@
+"""Adaptive agent router package."""
+
+from .config import Settings, SettingsError
 from .models import (
     AgentResult,
     AgentStrategy,
@@ -23,6 +26,8 @@ __all__ = [
     "RubricJudgeRequest",
     "RubricJudgeResponse",
     "SeedDataset",
+    "Settings",
+    "SettingsError",
     "Task",
     "TaskCategory",
     "load_seed_dataset",
