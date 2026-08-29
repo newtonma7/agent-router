@@ -105,7 +105,7 @@ class ExperimentRunner:
     ):
         self.strategies = strategies
         self.evaluator = evaluator
-        self.recorder = recorder
+        self.recorder = recorder or JSONLRecorder("runs.jsonl")
         self.feature_extractor = feature_extractor
         self.reward_config = {
             "reference_cost_usd": reference_cost_usd,
@@ -146,28 +146,28 @@ class ExperimentRunner:
             except Exception as error:
                 result = _failure_result(task, action, error, time.perf_counter() - started)
             evaluation = _call_evaluator(self.evaluator, task, result)
-            cost = _record_value(result, "estimated_cost_usd", 0.0) or 0.0
+            cost = _record_value(result, "estimated_cost_usd")
+            latency = _record_value(result, "latency_seconds")
+            quality = float(
+                _record_value(evaluation, "quality", _record_value(result, "quality", 0.0))
+            )
             reward = (
                 calculate_reward(
-                    float(_record_value(evaluation, "quality", _record_value(result, "quality", 0.0))),
-                    cost,
-                    _record_value(result, "latency_seconds", 0.0) or 0.0,
+                    quality,
+                    float(cost),
+                    float(latency),
                     **self.reward_config,
                 )
-                if evaluation is None
-                else calculate_reward(
-                    float(_get(evaluation, "quality", 0.0)),
-                    cost,
-                    _record_value(result, "latency_seconds", 0.0) or 0.0,
-                    **self.reward_config,
-                )
+                if cost is not None and latency is not None
+                else None
             )
-            policy.update(context, action, reward.reward)
-            cumulative_reward += reward.reward
+            if reward is not None:
+                policy.update(context, action, reward.reward)
+                cumulative_reward += reward.reward
 
             candidates = (oracle_candidates or {}).get(str(_get(task, "id", "")))
             task_regret = 0.0
-            if candidates:
+            if reward is not None and candidates:
                 oracle = hindsight_oracle(list(candidates))
                 oracle_reward = _get(oracle, "reward")
                 if oracle_reward is None:
@@ -188,13 +188,13 @@ class ExperimentRunner:
                 category=_name(_get(task, "category", "")),
                 answer=_record_value(result, "answer"),
                 evaluation=evaluation,
-                quality=reward.quality,
+                quality=quality,
                 passed=_get(evaluation, "passed") if evaluation is not None else None,
-                cost_usd=_record_value(result, "estimated_cost_usd", _record_value(result, "cost_usd", 0.0)),
-                latency_seconds=_record_value(result, "latency_seconds", 0.0),
-                normalized_cost=reward.normalized_cost,
-                normalized_latency=reward.normalized_latency,
-                reward=reward.reward,
+                cost_usd=cost,
+                latency_seconds=latency,
+                normalized_cost=reward.normalized_cost if reward else None,
+                normalized_latency=reward.normalized_latency if reward else None,
+                reward=reward.reward if reward else None,
                 error=_record_value(result, "error"),
                 timestamp=datetime.now(timezone.utc).isoformat(),
                 run_id=run_id,

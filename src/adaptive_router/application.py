@@ -11,9 +11,9 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from adaptive_router.evaluation import ExactEvaluator, NumericEvaluator, StructuredEvaluator
+from adaptive_router.evaluation import ExactEvaluator, NumericEvaluator, RubricEvaluator, StructuredEvaluator
 from adaptive_router.features import extract_features
-from adaptive_router.models import AgentResult, AgentStrategy, EvaluationResult, EvaluationType, Task
+from adaptive_router.models import AgentResult, AgentStrategy, EvaluationResult, EvaluationType, MockRubricJudge, Task
 from adaptive_router.persistence import JSONLRecorder, RunRecord
 from adaptive_router.routing import CategoryPolicy
 from adaptive_router.routing.base import action_name
@@ -150,6 +150,7 @@ class ApplicationService:
                 EvaluationType.NUMERIC.value: NumericEvaluator(),
                 EvaluationType.EXACT.value: ExactEvaluator(),
                 EvaluationType.STRUCTURED.value: StructuredEvaluator(),
+                EvaluationType.RUBRIC.value: RubricEvaluator(MockRubricJudge()),
             }
             if evaluators is None
             else evaluators

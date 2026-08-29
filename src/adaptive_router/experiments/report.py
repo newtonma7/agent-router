@@ -38,6 +38,14 @@ def aggregate_report(source: Iterable[Mapping[str, Any]] | str | Path | Any) -> 
         policies[policy] = _metrics([row for row in rows if str(row.get("policy", "")) == policy])
     result = _metrics(rows)
     result["policies"] = policies
+    result["run_ids"] = sorted({str(row.get("run_id", "")) for row in rows if row.get("run_id")})
+    result["task_sequence"] = [str(row.get("task_id", "")) for row in rows]
+    result["configurations"] = sorted(
+        {
+            repr(row.get("configuration", row.get("config", {})))
+            for row in rows
+        }
+    )
     result["limitations"] = [
         "The frozen seed benchmark is development evidence, not a production-scale claim.",
         "Live strategy stochasticity and rubric-judge calibration can affect results.",
