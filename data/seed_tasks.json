@@ -1,0 +1,176 @@
+{
+  "version": "1.0.0",
+  "tasks": [
+    {
+      "id": "A1",
+      "prompt": "What is 37 × 19? Return only the number.",
+      "category": "arithmetic",
+      "evaluation_type": "numeric",
+      "expected_answer": 703
+    },
+    {
+      "id": "A2",
+      "prompt": "A laptop originally costs $1,240. It is discounted by 18%, and then a 6% sales tax is applied to the discounted price. What is the final price? Round to the nearest cent and return only the amount.",
+      "category": "arithmetic",
+      "evaluation_type": "numeric",
+      "expected_answer": 1077.15,
+      "metadata": {
+        "numeric_tolerance": 0.01
+      }
+    },
+    {
+      "id": "A3",
+      "prompt": "Given the values 14, 22, 9, 31, 18, 27, 11, 25, 19, and 34, calculate their mean and population standard deviation. Round both to two decimal places.",
+      "category": "arithmetic",
+      "evaluation_type": "numeric",
+      "expected_answer": {
+        "mean": 21.0,
+        "population_standard_deviation": 7.76
+      },
+      "metadata": {
+        "numeric_tolerance": 0.01
+      }
+    },
+    {
+      "id": "R1",
+      "prompt": "All lorps are mavens. No mavens are tals. If Zed is a lorp, can Zed be a tal? Answer yes or no and briefly explain.",
+      "category": "reasoning",
+      "evaluation_type": "exact",
+      "expected_answer": "No"
+    },
+    {
+      "id": "R2",
+      "prompt": "Four people—Ava, Ben, Chloe, and Diego—stand in a line. Ava is somewhere before Ben. Chloe is immediately after Ben. Diego is before Ava. Who must be first?",
+      "category": "reasoning",
+      "evaluation_type": "exact",
+      "expected_answer": "Diego"
+    },
+    {
+      "id": "R3",
+      "prompt": "Five presentations—A, B, C, D, and E—are scheduled one per time slot from 1 through 5. A must occur before C. B must occur immediately after D. E cannot be first or last. C must occur after E. If A is scheduled second, which presentation must be first?",
+      "category": "reasoning",
+      "evaluation_type": "exact",
+      "expected_answer": "D"
+    },
+    {
+      "id": "E1",
+      "prompt": "In two sentences or fewer, explain what a hash table is and why it is useful.",
+      "category": "explanation",
+      "evaluation_type": "rubric",
+      "rubric": {
+        "dimensions": {
+          "technical_correctness": 0.4,
+          "completeness": 0.25,
+          "reasoning_depth": 0.15,
+          "clarity": 0.1,
+          "relevance_concision": 0.1
+        },
+        "pass_threshold": 0.7,
+        "guidance": {
+          "technical_correctness": "Must explain key-value association and hashing.",
+          "completeness": "Should mention efficient lookup or insertion.",
+          "reasoning_depth": "Connect hashing to the resulting operation efficiency.",
+          "clarity": "Use a clear explanation in no more than two sentences.",
+          "relevance_concision": "Stay focused on what a hash table is and why it helps."
+        }
+      }
+    },
+    {
+      "id": "E2",
+      "prompt": "Explain why increasing interest rates can reduce inflation. Your explanation should connect interest rates, borrowing, spending or investment, aggregate demand, and price pressure.",
+      "category": "explanation",
+      "evaluation_type": "rubric",
+      "rubric": {
+        "dimensions": {
+          "technical_correctness": 0.4,
+          "completeness": 0.25,
+          "reasoning_depth": 0.15,
+          "clarity": 0.1,
+          "relevance_concision": 0.1
+        },
+        "pass_threshold": 0.7,
+        "guidance": {
+          "technical_correctness": "Describe the standard demand-side monetary-policy channel accurately.",
+          "completeness": "Connect borrowing costs to consumption or investment, demand, and prices.",
+          "reasoning_depth": "Make the causal chain explicit rather than naming isolated effects.",
+          "clarity": "Explain the mechanism plainly.",
+          "relevance_concision": "Address the requested mechanism without unrelated macroeconomic detail."
+        }
+      }
+    },
+    {
+      "id": "E3",
+      "prompt": "An API currently returns database results directly from PostgreSQL on every request. The engineering team is considering adding a Redis cache. Explain two situations where caching would substantially improve the system and two situations where caching could introduce problems. Briefly explain why in each case.",
+      "category": "explanation",
+      "evaluation_type": "rubric",
+      "rubric": {
+        "dimensions": {
+          "technical_correctness": 0.4,
+          "completeness": 0.25,
+          "reasoning_depth": 0.15,
+          "clarity": 0.1,
+          "relevance_concision": 0.1
+        },
+        "pass_threshold": 0.7,
+        "guidance": {
+          "technical_correctness": "Accurately describe both caching benefits and tradeoffs.",
+          "completeness": "Give two meaningful improvement cases and two meaningful problem cases.",
+          "reasoning_depth": "Explain why read repetition, expensive work, staleness, hit rate, or consistency matter.",
+          "clarity": "Separate the situations and their explanations clearly.",
+          "relevance_concision": "Stay focused on the API, PostgreSQL, and Redis decision."
+        }
+      }
+    },
+    {
+      "id": "S1",
+      "prompt": "Extract name, plan, and seats from: “Hi, I'm Maya Chen from Acme Robotics. We'd like to upgrade our current account to the Enterprise plan for our 48 employees.” Return valid JSON with exactly those keys.",
+      "category": "extraction",
+      "evaluation_type": "structured",
+      "expected_answer": {
+        "name": "Maya Chen",
+        "plan": "Enterprise",
+        "seats": 48
+      }
+    },
+    {
+      "id": "S2",
+      "prompt": "Extract order_id, email, action, and item from: “I placed order #A83921 last Tuesday using samira.khan@example.com. The headphones are fine, but the USB-C docking station arrived damaged. I'd like a replacement for the docking station rather than a refund.”",
+      "category": "extraction",
+      "evaluation_type": "structured",
+      "expected_answer": {
+        "order_id": "A83921",
+        "email": "samira.khan@example.com",
+        "action": "replacement",
+        "item": "USB-C docking station"
+      }
+    },
+    {
+      "id": "S3",
+      "prompt": "Convert this text into a JSON array whose objects contain service, status, and region: “Payments API is operational in us-east-1. Search is degraded in eu-west-1. Authentication is operational in us-west-2. Analytics is unavailable in eu-central-1.”",
+      "category": "extraction",
+      "evaluation_type": "structured",
+      "expected_answer": [
+        {
+          "service": "Payments API",
+          "status": "operational",
+          "region": "us-east-1"
+        },
+        {
+          "service": "Search",
+          "status": "degraded",
+          "region": "eu-west-1"
+        },
+        {
+          "service": "Authentication",
+          "status": "operational",
+          "region": "us-west-2"
+        },
+        {
+          "service": "Analytics",
+          "status": "unavailable",
+          "region": "eu-central-1"
+        }
+      ]
+    }
+  ]
+}
