@@ -94,11 +94,17 @@ def test_result_contracts_validate_bounds() -> None:
 
 def test_seed_artifact_is_versioned_and_validated() -> None:
     dataset = load_seed_dataset(Path("data/seed_tasks.json"))
-    assert dataset.version == "1.0.0"
+    assert dataset.version == "1.1.0"
     assert [task.id for task in dataset.tasks] == [
         "A1", "A2", "A3", "R1", "R2", "R3", "E1", "E2", "E3", "S1", "S2", "S3"
     ]
     assert {task.category for task in dataset.tasks} == set(TaskCategory)
+    tasks = {task.id: task for task in dataset.tasks}
+    assert tasks["A2"].expected_answer == 1077.81
+    assert tasks["A3"].expected_answer == {
+        "mean": 21.0,
+        "population_standard_deviation": 7.92,
+    }
     assert SeedDataset.model_validate_json(Path("data/seed_tasks.json").read_text()).tasks
 
 

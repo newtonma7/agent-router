@@ -1,6 +1,8 @@
 import json
+import re
 from typing import Any, Protocol
 
+from adaptive_router.output import rubric_judge_response_format
 from adaptive_router.models import (
     EvaluationResult,
     EvaluationType,
@@ -32,11 +34,23 @@ class ProviderRubricJudge:
             f"Dimensions: {dimensions}\nPrompt: {request.prompt}\nAnswer: {request.answer}\n"
             f"Rubric guidance: {json.dumps(request.rubric.guidance, sort_keys=True)}"
         )
-        response = self.provider.complete(prompt, model=self.model)
+        response = self.provider.complete(
+            prompt,
+            model=self.model,
+            system_prompt=(
+                "You are a strict rubric judge. Return only the JSON object required by "
+                "the response schema. Do not include Markdown or commentary."
+            ),
+            response_format=rubric_judge_response_format(request.rubric.dimensions),
+        )
         if response.text is None:
             raise ValueError("rubric judge returned no response")
+        text = response.text.strip()
+        fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
+        if fenced:
+            text = fenced.group(1)
         try:
-            payload = json.loads(response.text)
+            payload = json.loads(text)
         except json.JSONDecodeError as exc:
             raise ValueError("rubric judge returned invalid JSON") from exc
         return RubricJudgeResponse.model_validate(payload)

@@ -4,3 +4,7 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 runs.jsonl
+experiment-report.json
+reports/
+experiments/reports/*.json
+experiments/runs/*.jsonl

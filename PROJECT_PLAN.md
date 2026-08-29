@@ -278,7 +278,7 @@ A laptop originally costs $1,240. It is discounted by 18%, and then a 6% sales t
 
 **Expected**
 
-`1077.15`
+`1077.81`
 
 **Evaluation**
 
@@ -300,7 +300,7 @@ Given the values 14, 22, 9, 31, 18, 27, 11, 25, 19, and 34, calculate their mean
 
 ```text
 mean = 21.00
-population standard deviation ≈ 7.76
+population standard deviation ≈ 7.92
 ```
 
 **Evaluation**
@@ -319,7 +319,7 @@ Tool should have the strongest quality/cost profile.
 
 **Prompt**
 
-All lorps are mavens. No mavens are tals. If Zed is a lorp, can Zed be a tal? Answer yes or no and briefly explain.
+All lorps are mavens. No mavens are tals. If Zed is a lorp, can Zed be a tal? Return only yes or no.
 
 **Expected**
 
@@ -361,7 +361,7 @@ This is an empirical hypothesis, not part of the grading criteria.
 
 **Prompt**
 
-Five presentations—A, B, C, D, and E—are scheduled one per time slot from 1 through 5. A must occur before C. B must occur immediately after D. E cannot be first or last. C must occur after E. If A is scheduled second, which presentation must be first?
+Five presentations—A, B, C, D, and E—are scheduled one per time slot from 1 through 5. A must occur before C. B must occur immediately after D. E cannot be first or last. C must occur after E. If A is scheduled third, which presentation must be first? Return only the answer.
 
 **Expected**
 

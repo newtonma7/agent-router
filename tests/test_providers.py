@@ -12,6 +12,32 @@ def test_mock_provider_is_repeatable_and_does_not_need_credentials():
     assert first == second == CompletionResponse(text="hello", input_tokens=2, output_tokens=1)
 
 
+def test_openai_compatible_adapter_sends_system_prompt_and_response_format():
+    requests = []
+
+    def transport(url, headers, payload, timeout):
+        requests.append(payload)
+        return {
+            "choices": [{"message": {"content": "answer", "tool_calls": []}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    response_format = {"type": "json_schema", "json_schema": {"name": "answer"}}
+    provider = OpenAICompatibleProvider(api_key="secret", transport=transport)
+    provider.complete(
+        "prompt",
+        model="model",
+        system_prompt="system",
+        response_format=response_format,
+    )
+
+    assert requests[0]["messages"] == [
+        {"role": "system", "content": "system"},
+        {"role": "user", "content": "prompt"},
+    ]
+    assert requests[0]["response_format"] == response_format
+
+
 def test_openai_compatible_adapter_maps_chat_completion_and_usage():
     requests = []
 

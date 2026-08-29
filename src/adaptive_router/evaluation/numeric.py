@@ -4,6 +4,7 @@ import re
 from typing import Any
 
 from adaptive_router.models import EvaluationResult, EvaluationType, Task
+from adaptive_router.output import unwrap_answer
 
 
 _NUMBER = re.compile(r"[-+]?(?:\d[\d,]*\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
@@ -28,6 +29,7 @@ def _numeric_values(value: Any) -> list[float]:
 
 
 def _candidate_values(answer: Any) -> list[float]:
+    answer = unwrap_answer(answer)
     if isinstance(answer, (dict, list, tuple)):
         return _numeric_values(answer)
     if isinstance(answer, (int, float)) and not isinstance(answer, bool):
@@ -45,6 +47,29 @@ def _candidate_values(answer: Any) -> list[float]:
     return values
 
 
+def _numeric_match(expected: Any, actual: Any, tolerance: float) -> bool:
+    expected = unwrap_answer(expected)
+    actual = unwrap_answer(actual)
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and set(expected) == set(actual)
+            and all(_numeric_match(expected[key], actual[key], tolerance) for key in expected)
+        )
+    if isinstance(expected, (list, tuple)):
+        return (
+            isinstance(actual, (list, tuple))
+            and len(expected) == len(actual)
+            and all(_numeric_match(wanted, found, tolerance) for wanted, found in zip(expected, actual))
+        )
+    if isinstance(expected, bool) or isinstance(actual, bool):
+        return False
+    try:
+        return math.isclose(float(actual), float(expected), rel_tol=0.0, abs_tol=tolerance)
+    except (TypeError, ValueError):
+        return False
+
+
 class NumericEvaluator:
     def __init__(self, tolerance: float = 0.0) -> None:
         if tolerance < 0 or not math.isfinite(tolerance):
@@ -55,8 +80,9 @@ class NumericEvaluator:
         if task.evaluation_type is not EvaluationType.NUMERIC:
             raise ValueError("NumericEvaluator requires a numeric task")
         expected = _numeric_values(task.expected_answer)
+        decoded_answer = unwrap_answer(answer)
         try:
-            actual = _candidate_values(answer)
+            actual = _candidate_values(decoded_answer)
         except ValueError as exc:
             return EvaluationResult(
                 quality=0.0,
@@ -70,10 +96,13 @@ class NumericEvaluator:
         )
         if configured is not None:
             tolerance = float(configured)
-        correct = len(actual) == len(expected) and all(
-            math.isclose(found, wanted, rel_tol=0.0, abs_tol=tolerance)
-            for found, wanted in zip(actual, expected)
-        )
+        if isinstance(task.expected_answer, (dict, list, tuple)) and not isinstance(decoded_answer, str):
+            correct = _numeric_match(task.expected_answer, decoded_answer, tolerance)
+        else:
+            correct = len(actual) == len(expected) and all(
+                math.isclose(found, wanted, rel_tol=0.0, abs_tol=tolerance)
+                for found, wanted in zip(actual, expected)
+            )
         return EvaluationResult(
             quality=1.0 if correct else 0.0,
             passed=correct,

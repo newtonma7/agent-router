@@ -10,6 +10,7 @@ from collections.abc import Callable, Mapping
 from typing import Any
 
 from adaptive_router.models.agent_result import AgentStrategy
+from adaptive_router.output import task_output_contract
 from adaptive_router.providers.base import CompletionResponse, ToolCall
 
 from .base import MeasuredStrategy, Pricing, _prompt
@@ -108,7 +109,7 @@ class ToolStrategy(MeasuredStrategy):
         prompt = _prompt(task)
         calls = 0
         results: list[Mapping[str, Any]] = []
-        response = self._provider_call(prompt, calls, results)
+        response = self._provider_call(task, calls, results)
         input_tokens = response.input_tokens
         output_tokens = response.output_tokens
         while response.tool_calls:
@@ -125,7 +126,7 @@ class ToolStrategy(MeasuredStrategy):
                         "content": str(result),
                     }
                 )
-            response = self._provider_call(prompt, calls, results)
+            response = self._provider_call(task, calls, results)
             input_tokens = self._sum_tokens(input_tokens, response.input_tokens)
             output_tokens = self._sum_tokens(output_tokens, response.output_tokens)
         if response.text is None:
@@ -145,19 +146,33 @@ class ToolStrategy(MeasuredStrategy):
 
     def _provider_call(
         self,
-        prompt: str,
+        task: Any,
         calls: int,
         results: list[Mapping[str, Any]],
     ) -> CompletionResponse:
+        prompt = _prompt(task)
+        system_prompt, response_format = task_output_contract(task)
+        category = getattr(getattr(task, "category", None), "value", getattr(task, "category", None))
+        tools = self.tools if str(category).lower() == "arithmetic" else ()
+        if tools:
+            system_prompt += " Use the calculator only for arithmetic; do not call it for other task types."
         try:
             if results:
                 return self.provider.complete(
                     prompt,
                     model=self.model,
-                    tools=self.tools,
+                    tools=tools,
                     tool_results=results,
+                    system_prompt=system_prompt,
+                    response_format=response_format,
                 )
-            return self.provider.complete(prompt, model=self.model, tools=self.tools)
+            return self.provider.complete(
+                prompt,
+                model=self.model,
+                tools=tools,
+                system_prompt=system_prompt,
+                response_format=response_format,
+            )
         except Exception as exc:
             raise ToolExecutionError(f"provider call failed: {exc}", calls=calls) from exc
 

@@ -3,16 +3,17 @@ import re
 from typing import Any
 
 from adaptive_router.models import EvaluationResult, EvaluationType, Task
+from adaptive_router.output import unwrap_answer
 
 
 def _parse_json(answer: Any) -> Any:
     if not isinstance(answer, str):
         return answer
     text = answer.strip()
-    fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
+    fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.DOTALL | re.IGNORECASE)
     if fenced:
         text = fenced.group(1)
-    return json.loads(text)
+    return unwrap_answer(json.loads(text))
 
 
 def _leaves(value: Any, path: tuple[str | int, ...] = ()) -> list[tuple[tuple[str | int, ...], Any]]:
@@ -27,6 +28,22 @@ def _leaves(value: Any, path: tuple[str | int, ...] = ()) -> list[tuple[tuple[st
             leaves.extend(_leaves(item, path + (index,)))
         return leaves
     return [(path, value)]
+
+
+def _same_shape(expected: Any, actual: Any) -> bool:
+    if isinstance(expected, dict):
+        return (
+            isinstance(actual, dict)
+            and set(expected) == set(actual)
+            and all(_same_shape(expected[key], actual[key]) for key in expected)
+        )
+    if isinstance(expected, list):
+        return (
+            isinstance(actual, list)
+            and len(expected) == len(actual)
+            and all(_same_shape(wanted, found) for wanted, found in zip(expected, actual))
+        )
+    return not isinstance(actual, (dict, list))
 
 
 def _same_value(expected: Any, actual: Any) -> bool:
@@ -57,14 +74,7 @@ class StructuredEvaluator:
         )
         total = len(expected_leaves)
         quality = correct / total if total else 0.0
-        exact_keys = bool(re.search(r"\bexactly\s+(?:those|the requested|these)\s+keys\b", task.prompt, re.I))
-        has_extra_keys = (
-            exact_keys
-            and isinstance(parsed, dict)
-            and isinstance(task.expected_answer, dict)
-            and set(parsed) != set(task.expected_answer)
-        )
-        passed = correct == total and not has_extra_keys
+        passed = correct == total and _same_shape(task.expected_answer, parsed)
         return EvaluationResult(
             quality=quality,
             passed=passed,

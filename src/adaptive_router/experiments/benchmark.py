@@ -18,6 +18,7 @@ def run_frozen_benchmark(
     *,
     evaluators: Mapping[Any, Any] | None = None,
     recorder: JSONLRecorder | None = None,
+    run_id: str | None = None,
     reference_cost_usd: float = 1.0,
     reference_latency_seconds: float = 1.0,
     cost_penalty: float = 0.0,
@@ -29,7 +30,7 @@ def run_frozen_benchmark(
     replay, where only the selected strategy may update the policy.
     """
     dataset = load_seed_dataset(path)
-    run_id = str(uuid.uuid4())
+    run_id = run_id or str(uuid.uuid4())
     records: list[dict[str, Any]] = []
     for action in strategies:
         action_name = str(getattr(action, "value", action)).lower()

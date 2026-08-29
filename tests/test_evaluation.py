@@ -51,6 +51,10 @@ def test_numeric_evaluator_compares_multiple_values() -> None:
     )
     assert result.quality == 1
     assert result.passed
+    assert NumericEvaluator().evaluate(
+        task(EvaluationType.NUMERIC, {"mean": 21.0, "sd": 7.76}),
+        '{"answer":{"sd":7.76,"mean":21.0}}',
+    ).passed
 
 
 def test_exact_evaluator_grades_conclusion_not_explanation() -> None:
@@ -62,6 +66,14 @@ def test_exact_evaluator_grades_conclusion_not_explanation() -> None:
         task(EvaluationType.EXACT, "Diego"), "Answer: Diego must be first."
     ).passed
     assert not ExactEvaluator().evaluate(task(EvaluationType.EXACT, "No"), "Yes").passed
+
+
+def test_exact_evaluator_accepts_final_conclusion_after_explanation() -> None:
+    result = ExactEvaluator().evaluate(
+        task(EvaluationType.EXACT, "Diego"),
+        "Ava is before Ben. Therefore, Diego must be first.",
+    )
+    assert result.passed
 
 
 def test_exact_evaluator_ignores_yes_or_no_inside_prior_explanation() -> None:
@@ -83,6 +95,9 @@ def test_structured_evaluator_reports_partial_credit_and_full_pass() -> None:
     assert evaluator.evaluate(
         benchmark_task, '{"name":"Maya Chen","plan":"Enterprise","seats":48}'
     ).passed
+    assert evaluator.evaluate(
+        benchmark_task, '{"answer":{"name":"Maya Chen","plan":"Enterprise","seats":48}}'
+    ).passed
     malformed = evaluator.evaluate(benchmark_task, "not json")
     assert malformed.quality == 0
     assert not malformed.passed
@@ -100,6 +115,23 @@ def test_structured_evaluator_honors_exact_keys_instruction() -> None:
     result = StructuredEvaluator().evaluate(
         extraction_task,
         '{"name":"Maya","plan":"Enterprise","extra":"ignored"}',
+    )
+    assert result.quality == 1.0
+    assert result.passed is False
+
+
+def test_structured_evaluator_rejects_extra_array_items():
+    extraction_task = Task(
+        id="S3",
+        prompt="Return JSON.",
+        category=TaskCategory.EXTRACTION,
+        evaluation_type=EvaluationType.STRUCTURED,
+        expected_answer=[{"service": "Payments", "status": "operational"}],
+    )
+
+    result = StructuredEvaluator().evaluate(
+        extraction_task,
+        '[{"service":"Payments","status":"operational"},{"service":"Fake","status":"operational"}]',
     )
     assert result.quality == 1.0
     assert result.passed is False
@@ -130,7 +162,7 @@ def test_provider_rubric_judge_returns_structured_scores_without_strategy_metada
         def __init__(self) -> None:
             self.prompt = ""
 
-        def complete(self, prompt, *, model):
+        def complete(self, prompt, *, model, **kwargs):
             self.prompt = prompt
             from adaptive_router.providers.base import CompletionResponse
 

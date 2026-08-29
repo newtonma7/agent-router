@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "tasks": [
     {
       "id": "A1",
@@ -13,10 +13,7 @@
       "prompt": "A laptop originally costs $1,240. It is discounted by 18%, and then a 6% sales tax is applied to the discounted price. What is the final price? Round to the nearest cent and return only the amount.",
       "category": "arithmetic",
       "evaluation_type": "numeric",
-      "expected_answer": 1077.15,
-      "metadata": {
-        "numeric_tolerance": 0.01
-      }
+      "expected_answer": 1077.81
     },
     {
       "id": "A3",
@@ -25,29 +22,26 @@
       "evaluation_type": "numeric",
       "expected_answer": {
         "mean": 21.0,
-        "population_standard_deviation": 7.76
-      },
-      "metadata": {
-        "numeric_tolerance": 0.01
+        "population_standard_deviation": 7.92
       }
     },
     {
       "id": "R1",
-      "prompt": "All lorps are mavens. No mavens are tals. If Zed is a lorp, can Zed be a tal? Answer yes or no and briefly explain.",
+      "prompt": "All lorps are mavens. No mavens are tals. If Zed is a lorp, can Zed be a tal? Return only yes or no.",
       "category": "reasoning",
       "evaluation_type": "exact",
       "expected_answer": "No"
     },
     {
       "id": "R2",
-      "prompt": "Four people—Ava, Ben, Chloe, and Diego—stand in a line. Ava is somewhere before Ben. Chloe is immediately after Ben. Diego is before Ava. Who must be first?",
+      "prompt": "Four people—Ava, Ben, Chloe, and Diego—stand in a line. Ava is somewhere before Ben. Chloe is immediately after Ben. Diego is before Ava. Who must be first? Return only the answer.",
       "category": "reasoning",
       "evaluation_type": "exact",
       "expected_answer": "Diego"
     },
     {
       "id": "R3",
-      "prompt": "Five presentations—A, B, C, D, and E—are scheduled one per time slot from 1 through 5. A must occur before C. B must occur immediately after D. E cannot be first or last. C must occur after E. If A is scheduled second, which presentation must be first?",
+      "prompt": "Five presentations—A, B, C, D, and E—are scheduled one per time slot from 1 through 5. A must occur before C. B must occur immediately after D. E cannot be first or last. C must occur after E. If A is scheduled third, which presentation must be first? Return only the answer.",
       "category": "reasoning",
       "evaluation_type": "exact",
       "expected_answer": "D"
@@ -134,7 +128,7 @@
     },
     {
       "id": "S2",
-      "prompt": "Extract order_id, email, action, and item from: “I placed order #A83921 last Tuesday using samira.khan@example.com. The headphones are fine, but the USB-C docking station arrived damaged. I'd like a replacement for the docking station rather than a refund.”",
+      "prompt": "Extract order_id, email, action, and item from: “I placed order #A83921 last Tuesday using samira.khan@example.com. The headphones are fine, but the USB-C docking station arrived damaged. I'd like a replacement for the docking station rather than a refund.” Return valid JSON with exactly those keys and no other text.",
       "category": "extraction",
       "evaluation_type": "structured",
       "expected_answer": {
@@ -146,7 +140,7 @@
     },
     {
       "id": "S3",
-      "prompt": "Convert this text into a JSON array whose objects contain service, status, and region: “Payments API is operational in us-east-1. Search is degraded in eu-west-1. Authentication is operational in us-west-2. Analytics is unavailable in eu-central-1.”",
+      "prompt": "Convert this text into a JSON array whose objects contain service, status, and region: “Payments API is operational in us-east-1. Search is degraded in eu-west-1. Authentication is operational in us-west-2. Analytics is unavailable in eu-central-1.” Return only valid JSON with no prose or Markdown.",
       "category": "extraction",
       "evaluation_type": "structured",
       "expected_answer": [

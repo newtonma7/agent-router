@@ -2,11 +2,12 @@ import re
 from typing import Any
 
 from adaptive_router.models import EvaluationResult, EvaluationType, Task
+from adaptive_router.output import unwrap_answer
 
 
 def normalize_answer(value: Any) -> str:
     """Normalize harmless formatting differences without changing meaning."""
-    text = str(value).strip().strip("`*_#")
+    text = str(unwrap_answer(value)).strip().strip("`*_#")
     return " ".join(text.casefold().split())
 
 
@@ -29,7 +30,15 @@ class ExactEvaluator:
             conclusion = re.sub(
                 r"^(?:the )?answer\s*(?:is|:)\s*", "", conclusion
             )
-            correct = conclusion == expected or conclusion.startswith(expected + " ")
+            conclusion_match = re.search(
+                rf"\b(?:answer|conclusion|therefore|thus)\b[^.!?\n]*\b{re.escape(expected)}\b",
+                actual_text,
+            )
+            correct = (
+                conclusion == expected
+                or conclusion.startswith(expected + " ")
+                or conclusion_match is not None
+            )
         return EvaluationResult(
             quality=1.0 if correct else 0.0,
             passed=correct,

@@ -3,8 +3,10 @@ from types import SimpleNamespace
 from adaptive_router.agents.direct import DirectStrategy
 from adaptive_router.agents.strong import StrongStrategy
 from adaptive_router.agents.tool import ToolStrategy
+from adaptive_router.models import EvaluationType, Task, TaskCategory
 from adaptive_router.providers.base import CompletionResponse, ToolCall
 from adaptive_router.providers.mock import MockProvider
+from adaptive_router.providers.openai import OpenAICompatibleProvider
 
 
 def task(prompt="What is 2 + 2?"):

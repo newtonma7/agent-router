@@ -19,14 +19,23 @@ def _records(source: Iterable[Mapping[str, Any]] | str | Path | Any) -> list[Map
 
 def _metrics(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     count = len(rows)
+    scored = [row for row in rows if row.get("quality") is not None]
+    measured_costs = [
+        float(row.get("cost_usd", row.get("estimated_cost_usd")))
+        for row in rows
+        if row.get("cost_usd", row.get("estimated_cost_usd")) is not None
+    ]
     average = lambda name: sum(float(row.get(name) or 0.0) for row in rows) / count if count else 0.0
     return {
         "attempts": count,
-        "quality": average("quality"),
-        "pass_rate": sum(bool(row.get("passed")) for row in rows) / count if count else 0.0,
-        "cost_usd": average("cost_usd"),
+        "scored_attempts": len(scored),
+        "unscored_attempts": count - len(scored),
+        "errors": sum(bool(row.get("error")) for row in rows),
+        "quality": sum(float(row["quality"]) for row in scored) / len(scored) if scored else 0.0,
+        "pass_rate": sum(bool(row.get("passed")) for row in scored) / len(scored) if scored else 0.0,
+        "cost_usd": sum(measured_costs) / len(measured_costs) if measured_costs else 0.0,
         "latency_seconds": average("latency_seconds"),
-        "reward": average("reward"),
+        "reward": sum(float(row["reward"]) for row in rows if row.get("reward") is not None) / count if count else 0.0,
         "regret": sum(float(row.get("regret") or 0.0) for row in rows),
     }
 

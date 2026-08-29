@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any, Mapping, Protocol, Sequence
+from typing import Any, Protocol
 
 
 class ProviderError(RuntimeError):
@@ -48,5 +49,7 @@ class Provider(Protocol):
         model: str,
         tools: Sequence[Mapping[str, Any]] = (),
         tool_results: Sequence[Mapping[str, Any]] = (),
+        system_prompt: str | None = None,
+        response_format: Mapping[str, Any] | None = None,
     ) -> CompletionResponse:
         """Complete one prompt without retries or fallback."""

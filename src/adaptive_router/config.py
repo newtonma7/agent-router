@@ -4,12 +4,43 @@ from __future__ import annotations
 
 import math
 import os
+import shlex
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Mapping
 
 
 class SettingsError(ValueError):
     """Raised when environment-backed router settings are invalid."""
+
+
+def _read_dotenv(path: Path) -> dict[str, str]:
+    """Read the small ``KEY=value`` subset used by the example file."""
+    if not path.is_file():
+        return {}
+    values: dict[str, str] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        if "=" not in line:
+            continue
+        key, raw_value = (part.strip() for part in line.split("=", 1))
+        if not key or not key.isidentifier():
+            continue
+        raw_value = raw_value.strip()
+        if raw_value.startswith(("'", '"')):
+            try:
+                parsed = shlex.split(raw_value, comments=True)
+            except ValueError as exc:
+                raise SettingsError(f"invalid .env value for {key}") from exc
+            value = parsed[0] if parsed else ""
+        else:
+            value = raw_value.split(" #", 1)[0].rstrip()
+        values[key] = value
+    return values
 
 
 @dataclass(frozen=True, repr=False)
@@ -39,8 +70,17 @@ class Settings:
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "Settings":
-        """Load settings using ADAPTIVE_ROUTER_* names and safe aliases."""
-        values = dict(os.environ if environ is None else environ)
+        """Load settings from ``.env`` and the process environment.
+
+        Explicit process environment values win over values in ``.env``.
+        Passing ``environ`` keeps callers and tests fully isolated from files.
+        """
+        values = {}
+        if environ is None:
+            values.update(_read_dotenv(Path(".env")))
+            values.update(os.environ)
+        else:
+            values.update(environ)
 
         def get(name: str, *aliases: str, default: str | None = None) -> str | None:
             for key in (f"ADAPTIVE_ROUTER_{name}", *aliases):

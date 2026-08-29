@@ -59,8 +59,13 @@ class OpenAICompatibleProvider:
         model: str,
         tools: Sequence[Mapping[str, Any]] = (),
         tool_results: Sequence[Mapping[str, Any]] = (),
+        system_prompt: str | None = None,
+        response_format: Mapping[str, Any] | None = None,
     ) -> CompletionResponse:
-        messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
+        messages: list[dict[str, Any]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
         assistant_calls: list[dict[str, Any]] = []
         normalized_results: list[Mapping[str, Any]] = []
         for result in tool_results:
@@ -99,6 +104,8 @@ class OpenAICompatibleProvider:
         payload: dict[str, Any] = {"model": model, "messages": messages}
         if tools:
             payload["tools"] = list(tools)
+        if response_format is not None:
+            payload["response_format"] = dict(response_format)
         body = self._post(payload)
         return self._parse_response(body)
 

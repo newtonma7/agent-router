@@ -7,11 +7,10 @@ A small contextual-bandit research service that routes tasks to `direct`, `stron
 ```bash
 python3 -m pip install -e '.[dev]'
 cp .env.example .env
-set -a; . ./.env; set +a
 uvicorn adaptive_router.main:app --reload
 ```
 
-Edit `.env` with your provider key and model settings first. `.env` is ignored by Git.
+Edit `.env` with your provider key and model settings first. The application loads it automatically; process environment values override it. `.env` is ignored by Git.
 
 The API is available at <http://127.0.0.1:8000/docs>.
 
@@ -28,10 +27,27 @@ The request body is a validated `Task`; `evaluate` is optional and defaults to f
 
 ```bash
 docker build -t adaptive-agent-router .
+# Default deterministic mock mode:
 docker run --rm -p 8000:8000 adaptive-agent-router
+# To pass your local .env (for live/custom settings):
+docker run --rm --env-file .env -p 8000:8000 adaptive-agent-router
 ```
 
 Mock mode needs no credentials. The container exposes `/health`, `/infer`, and interactive `/docs`.
+
+## Experiments
+
+Run experiments directly in Python; FastAPI and Podman are not required:
+
+```bash
+# Full-information comparison: 3 strategies × 12 seed tasks
+python scripts/run_experiment.py
+
+# Online replay for one routing policy
+python scripts/run_experiment.py --mode replay --policy linucb --seed 7
+```
+
+The script loads `.env`, writes each run to `experiments/runs/`, and writes a unique report to `experiments/reports/` using a timestamp and hash. Use `--records` or `--output` to change those paths. Live runs require provider credits; mock mode only checks the experiment plumbing.
 
 ## Rubric judge calibration
 

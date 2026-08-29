@@ -131,3 +131,22 @@ def test_reports_include_aggregate_task_and_category_metrics():
     assert aggregate_report(rows)["attempts"] == 2
     assert task_report(rows)["a"]["pass_rate"] == 1
     assert category_report(rows)["reasoning"]["quality"] == .5
+
+
+def test_reports_do_not_treat_unscored_attempts_as_quality_failures():
+    from adaptive_router.experiments import aggregate_report
+
+    report = aggregate_report(
+        [
+            {"quality": 1.0, "passed": True, "cost_usd": 0.1, "latency_seconds": 0.2, "reward": 0.8},
+            {"quality": None, "passed": None, "cost_usd": None, "latency_seconds": 0.3, "reward": None, "error": "judge failed"},
+        ]
+    )
+
+    assert report["attempts"] == 2
+    assert report["scored_attempts"] == 1
+    assert report["unscored_attempts"] == 1
+    assert report["quality"] == 1.0
+    assert report["pass_rate"] == 1.0
+    assert report["cost_usd"] == 0.1
+    assert report["errors"] == 1
