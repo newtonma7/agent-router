@@ -6,8 +6,12 @@ A small contextual-bandit research service that routes tasks to `direct`, `stron
 
 ```bash
 python3 -m pip install -e '.[dev]'
+cp .env.example .env
+set -a; . ./.env; set +a
 uvicorn adaptive_router.main:app --reload
 ```
+
+Edit `.env` with your provider key and model settings first. `.env` is ignored by Git.
 
 The API is available at <http://127.0.0.1:8000/docs>.
 
