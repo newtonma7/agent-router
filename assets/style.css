@@ -1,0 +1,43 @@
+:root {
+  color-scheme: light;
+  --ink: #1e293b;
+  --muted: #64748b;
+  --paper: #f8fafc;
+  --card: #ffffff;
+  --line: #dbe4ef;
+  --blue: #2563eb;
+  --blue-soft: #eff6ff;
+  --amber: #b45309;
+  --green: #047857;
+  --red: #b91c1c;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+main { max-width: 900px; margin: 0 auto; padding: 48px 24px 72px; }
+.eyebrow { color: var(--blue); font-size: .78rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+h1 { max-width: 720px; margin: 8px 0 12px; font: 750 clamp(2.1rem, 5vw, 4rem)/1.04 Georgia, serif; letter-spacing: -.04em; }
+h2 { margin-top: 44px; font: 750 1.6rem/1.15 Georgia, serif; }
+h3 { margin-bottom: 8px; }
+p { max-width: 72ch; }
+a { color: var(--blue); }
+.lede { color: var(--muted); font-size: 1.12rem; max-width: 62ch; }
+.note { border-left: 4px solid var(--blue); background: var(--blue-soft); padding: 14px 18px; margin: 24px 0; }
+.diagram { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; align-items: center; margin: 26px 0; }
+.node { min-height: 82px; display: grid; place-items: center; padding: 10px; text-align: center; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 8px 24px #0f172a0a; font-weight: 700; }
+.arrow { color: var(--blue); font-size: 1.4rem; text-align: center; }
+.code { overflow-x: auto; padding: 18px; border-radius: 12px; background: #0f172a; color: #e2e8f0; font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+.card p { color: var(--muted); font-size: .94rem; }
+.quiz { border-top: 1px solid var(--line); padding-top: 20px; margin-top: 20px; }
+.quiz button { border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); cursor: pointer; margin: 4px 6px 4px 0; padding: 9px 12px; }
+.quiz button:hover { border-color: var(--blue); color: var(--blue); }
+.feedback { min-height: 1.6em; color: var(--green); font-weight: 650; }
+footer { color: var(--muted); border-top: 1px solid var(--line); margin-top: 48px; padding-top: 18px; font-size: .9rem; }
+@media (max-width: 680px) { main { padding-top: 28px; } .diagram, .grid { grid-template-columns: 1fr; } .arrow { transform: rotate(90deg); } }

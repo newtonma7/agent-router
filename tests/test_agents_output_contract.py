@@ -51,3 +51,28 @@ def test_tool_strategy_does_not_offer_calculator_to_non_arithmetic_tasks():
 
     assert result.error is None
     assert "tools" not in requests[0]
+    assert "parallel_tool_calls" not in requests[0]
+
+
+def test_tool_strategy_serializes_calculator_calls():
+    requests = []
+
+    def transport(url, headers, payload, timeout):
+        requests.append(payload)
+        return {
+            "choices": [{"message": {"content": '{"answer":4}', "tool_calls": []}}],
+            "usage": {"prompt_tokens": 1, "completion_tokens": 1},
+        }
+
+    task = Task(
+        id="A1",
+        prompt="What is 2 + 2?",
+        category=TaskCategory.ARITHMETIC,
+        evaluation_type=EvaluationType.NUMERIC,
+        expected_answer=4,
+    )
+    provider = OpenAICompatibleProvider(api_key="secret", transport=transport)
+    result = ToolStrategy(provider, model="model").execute(task)
+
+    assert result.error is None
+    assert requests[0]["parallel_tool_calls"] is False

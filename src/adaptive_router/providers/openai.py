@@ -61,6 +61,7 @@ class OpenAICompatibleProvider:
         tool_results: Sequence[Mapping[str, Any]] = (),
         system_prompt: str | None = None,
         response_format: Mapping[str, Any] | None = None,
+        parallel_tool_calls: bool | None = None,
     ) -> CompletionResponse:
         messages: list[dict[str, Any]] = []
         if system_prompt:
@@ -106,6 +107,8 @@ class OpenAICompatibleProvider:
             payload["tools"] = list(tools)
         if response_format is not None:
             payload["response_format"] = dict(response_format)
+        if parallel_tool_calls is not None:
+            payload["parallel_tool_calls"] = parallel_tool_calls
         body = self._post(payload)
         return self._parse_response(body)
 

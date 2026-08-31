@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 2 — Bandit Feedback vs Full RL</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<main>
+  <div class="eyebrow">Lesson 02 · Adaptive Agent Router</div>
+  <h1>The missing piece in full RL</h1>
+  <p class="lede">Your mapping was right. The one refinement is that full RL is defined by action-dependent future states and rewards—not simply by whether we “modify” an environment.</p>
+
+  <div class="note"><strong>You already have:</strong> context = task features, action = chosen strategy, feedback = result of that strategy. This lesson adds the state-transition test.</div>
+
+  <h2>The state-transition test</h2>
+  <div class="grid">
+    <section class="card"><h3>Contextual bandit</h3><p>The current context arrives, one action is selected, feedback is observed, and the decision ends.</p><div class="code">xₜ → aₜ → rₜ → end</div></section>
+    <section class="card"><h3>Full reinforcement learning</h3><p>The action changes what state comes next, and that next state affects later decisions and rewards.</p><div class="code">sₜ → aₜ → sₜ₊₁ → aₜ₊₁ → return</div></section>
+  </div>
+
+  <p>Ask: <strong>“Does the chosen action determine the next decision situation?”</strong> In the router, choosing <code>tool</code> instead of <code>direct</code> changes the current answer and reward, but it does not determine what the next task will be. Therefore the project is a one-step contextual bandit.</p>
+
+  <h2>Why only one update?</h2>
+  <div class="diagram" aria-label="Bandit feedback diagram">
+    <div class="node">Three possible<br>strategies</div><div class="arrow">→</div>
+    <div class="node">Choose one<br><code>strong</code></div><div class="arrow">→</div>
+    <div class="node">Observe one<br>reward</div>
+  </div>
+  <p>This is called <strong>bandit feedback</strong>: you see the payoff for the arm you pulled, not the payoffs of the arms you did not pull. The full benchmark deliberately runs all three strategies, but that is an offline comparison—not honest online feedback for one routing decision.</p>
+
+  <h2>One subtle point</h2>
+  <p>The router's policy does change after each task because its estimates are updated. That makes the overall experiment sequential, but it does not make the task environment a full RL environment. The policy learns across rounds; the task does not become a new state caused by the previous action.</p>
+
+  <h2>Retrieval check</h2>
+  <div class="quiz">
+    <p><strong>1.</strong> In one sentence, what must exist for full RL but not for this router?</p>
+    <button data-answer="wrong">A numerical reward</button>
+    <button data-answer="right">Action-dependent future states</button>
+    <button data-answer="wrong">Several available actions</button>
+    <div class="feedback" aria-live="polite"></div>
+  </div>
+  <div class="quiz">
+    <p><strong>2.</strong> The router selected <code>direct</code>. What can it honestly use for this update?</p>
+    <button data-answer="right">Direct's observed reward</button>
+    <button data-answer="wrong">Strong's imagined reward</button>
+    <button data-answer="wrong">Tool's average reward</button>
+    <div class="feedback" aria-live="polite"></div>
+  </div>
+  <div class="quiz">
+    <p><strong>3.</strong> The tool strategy makes two calculator calls internally. Does that make the project full RL?</p>
+    <button data-answer="wrong">Yes, every loop is full RL</button>
+    <button data-answer="right">No, the loop is fixed execution</button>
+    <button data-answer="wrong">Yes, because tools are states</button>
+    <div class="feedback" aria-live="polite"></div>
+  </div>
+
+  <h2>Primary reading</h2>
+  <p>Read Chapter 2 of <a href="https://www.incompleteideas.net/book/bookdraft2018mar21.pdf">Sutton &amp; Barto</a> for multi-armed bandits, then Chapter 18 of <a href="https://tor-lattimore.com/downloads/book/book.pdf">Lattimore &amp; Szepesvári</a> for contextual bandits. Ask follow-up questions about any notation.</p>
+  <p><a href="../lessons/0001-why-contextual-bandit.html">Lesson 1</a> · <a href="../reference/contextual-bandits.html">Quick reference</a> · <a href="../MISSION.md">Mission</a></p>
+
+  <footer>Next: map epsilon-greedy and UCB to exploration and exploitation.</footer>
+</main>
+<script>
+  document.querySelectorAll('.quiz').forEach((quiz) => {
+    const feedback = quiz.querySelector('.feedback');
+    quiz.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
+      const correct = button.dataset.answer === 'right';
+      feedback.textContent = correct ? 'Correct — explain the reason aloud or in a message.' : 'Try again — focus on future states and observed feedback.';
+      feedback.style.color = correct ? 'var(--green)' : 'var(--red)';
+    }));
+  });
+</script>
+</body>
+</html>

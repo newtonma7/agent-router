@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesson 1 — Why This Router Is a Contextual Bandit</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<main>
+  <div class="eyebrow">Lesson 01 · Adaptive Agent Router</div>
+  <h1>Why this project is a contextual bandit</h1>
+  <p class="lede">One task arrives. The router sees a little context, chooses one strategy, and learns from the result. That single sentence is the whole RL connection.</p>
+
+  <div class="note"><strong>Tangible win:</strong> after this lesson, you should be able to label every important object in the project as context, action, feedback, or policy—and explain why this is not full RL.</div>
+
+  <h2>The project loop</h2>
+  <div class="diagram" aria-label="Task to context to strategy to feedback to learning loop">
+    <div class="node">Task<br><small>prompt + category</small></div><div class="arrow">→</div>
+    <div class="node">Context<br><small>8 pre-action features</small></div><div class="arrow">→</div>
+    <div class="node">Action<br><small>direct / strong / tool</small></div>
+  </div>
+  <div class="diagram" aria-label="Action to result to reward to policy update">
+    <div class="node">Execution<br><small>one strategy runs</small></div><div class="arrow">→</div>
+    <div class="node">Feedback<br><small>quality, cost, latency</small></div><div class="arrow">→</div>
+    <div class="node">Update<br><small>selected action only</small></div>
+  </div>
+
+  <h2>Bandit, not full RL</h2>
+  <div class="grid">
+    <section class="card"><h3>Bandit</h3><p>There is one decision for the current task. The task ends after the selected strategy returns and is evaluated.</p></section>
+    <section class="card"><h3>Contextual</h3><p>The best strategy can depend on the task. Arithmetic may favor <code>tool</code>; easy extraction may favor <code>direct</code>.</p></section>
+    <section class="card"><h3>Not full RL</h3><p>The current answer does not create a next environment state that determines a chain of future decisions.</p></section>
+  </div>
+  <p>For the formal distinction, read Chapters 1–2 of <a href="https://www.incompleteideas.net/book/bookdraft2018mar21.pdf">Sutton &amp; Barto</a>. For contextual-bandit foundations, use Chapter 18 of <a href="https://tor-lattimore.com/downloads/book/book.pdf">Lattimore &amp; Szepesvári</a>.</p>
+
+  <h2>How the policies differ</h2>
+  <ul>
+    <li><strong>Epsilon-greedy</strong> and <strong>UCB</strong> learn global action values: “which strategy is good on average?”</li>
+    <li><strong>LinUCB</strong> uses the feature vector: “which strategy is good for this kind of task?”</li>
+    <li>The full benchmark runs all strategies for comparison; online replay observes only the chosen strategy.</li>
+  </ul>
+  <p>The LinUCB connection is made formal in <a href="https://proceedings.mlr.press/v15/chu11a.html">Chu et al., “Contextual Bandits with Linear Payoff Functions”</a>.</p>
+
+  <h2>Retrieval check</h2>
+  <div class="quiz">
+    <p><strong>1.</strong> The router sees category and prompt length, chooses <code>tool</code>, then receives its quality. What is this?</p>
+    <button data-answer="wrong">Multi-armed bandit</button>
+    <button data-answer="right">Contextual bandit</button>
+    <button data-answer="wrong">Full reinforcement learning</button>
+    <div class="feedback" id="q1" aria-live="polite"></div>
+  </div>
+  <div class="quiz">
+    <p><strong>2.</strong> In this project, what is the action?</p>
+    <button data-answer="wrong">The prompt</button>
+    <button data-answer="right">The strategy</button>
+    <button data-answer="wrong">The evaluator</button>
+    <div class="feedback" id="q2" aria-live="polite"></div>
+  </div>
+  <div class="quiz">
+    <p><strong>3.</strong> Why does online replay update only one action?</p>
+    <button data-answer="right">Only one strategy ran</button>
+    <button data-answer="wrong">All rewards are equal</button>
+    <button data-answer="wrong">Context is unavailable</button>
+    <div class="feedback" id="q3" aria-live="polite"></div>
+  </div>
+
+  <h2>Next step</h2>
+  <p>Open the <a href="../reference/contextual-bandits.html">contextual-bandit quick reference</a>, then inspect <code>src/adaptive_router/routing/linucb.py</code> and identify where the formula's prediction and confidence terms appear. Ask follow-up questions whenever a line or term is unclear.</p>
+
+  <footer>Mission: understand and defend the adaptive router, then run credible experiments. <a href="../RESOURCES.md">All resources</a>.</footer>
+</main>
+<script>
+  document.querySelectorAll('.quiz').forEach((quiz) => {
+    const feedback = quiz.querySelector('.feedback');
+    quiz.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
+      const correct = button.dataset.answer === 'right';
+      feedback.textContent = correct ? 'Correct — say why in your own words.' : 'Not quite — reread the bandit/context distinction and try again.';
+      feedback.style.color = correct ? 'var(--green)' : 'var(--red)';
+    }));
+  });
+</script>
+</body>
+</html>

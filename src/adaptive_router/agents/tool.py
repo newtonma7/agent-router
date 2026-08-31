@@ -41,10 +41,20 @@ _UNARY_OPERATORS: dict[type[ast.unaryop], Callable[[int | float], int | float]] 
 
 
 def calculate(expression: str) -> int | float:
-    """Evaluate a small arithmetic expression without invoking Python eval."""
+    """Evaluate an allowlisted arithmetic or statistical expression."""
     if not isinstance(expression, str) or not expression.strip():
         raise ValueError("calculator expression must be non-empty text")
     tree = ast.parse(expression, mode="eval")
+
+    def visit_values(node: ast.AST) -> list[float]:
+        if not isinstance(node, (ast.List, ast.Tuple)):
+            raise ValueError("statistical functions require a numeric list")
+        values = [float(visit(item)) for item in node.elts]
+        if not values:
+            raise ValueError("statistical functions require at least one value")
+        if not all(math.isfinite(value) for value in values):
+            raise ValueError("calculator values must be finite")
+        return values
 
     def visit(node: ast.AST) -> int | float:
         if isinstance(node, ast.Expression):
@@ -61,7 +71,18 @@ def calculate(expression: str) -> int | float:
             if not math.isfinite(float(value)):
                 raise ValueError("calculator result is not finite")
             return value
-        raise ValueError("calculator accepts arithmetic only")
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id not in {"mean", "population_stddev"}:
+                raise ValueError("calculator function is not allowlisted")
+            if len(node.args) != 1 or node.keywords:
+                raise ValueError("statistical functions accept one numeric list")
+            values = visit_values(node.args[0])
+            average = math.fsum(values) / len(values)
+            if node.func.id == "mean":
+                return average
+            variance = math.fsum((value - average) ** 2 for value in values) / len(values)
+            return math.sqrt(variance)
+        raise ValueError("calculator accepts arithmetic and allowlisted statistics only")
 
     return visit(tree)
 
@@ -94,7 +115,10 @@ class ToolStrategy(MeasuredStrategy):
                 "type": "function",
                 "function": {
                     "name": "calculator",
-                    "description": "Evaluate one arithmetic expression exactly.",
+                    "description": (
+                        "Evaluate one arithmetic expression exactly, or use mean([numbers]) "
+                        "and population_stddev([numbers]) for statistics."
+                    ),
                     "parameters": {
                         "type": "object",
                         "properties": {"expression": {"type": "string"}},
@@ -155,7 +179,11 @@ class ToolStrategy(MeasuredStrategy):
         category = getattr(getattr(task, "category", None), "value", getattr(task, "category", None))
         tools = self.tools if str(category).lower() == "arithmetic" else ()
         if tools:
-            system_prompt += " Use the calculator only for arithmetic; do not call it for other task types."
+            system_prompt += (
+                " Use the calculator only for arithmetic or supported statistics; "
+                "use mean([numbers]) or population_stddev([numbers]) for lists, "
+                "and do not call it for other task types."
+            )
         try:
             if results:
                 return self.provider.complete(
@@ -165,6 +193,7 @@ class ToolStrategy(MeasuredStrategy):
                     tool_results=results,
                     system_prompt=system_prompt,
                     response_format=response_format,
+                    parallel_tool_calls=False if tools else None,
                 )
             return self.provider.complete(
                 prompt,
@@ -172,6 +201,7 @@ class ToolStrategy(MeasuredStrategy):
                 tools=tools,
                 system_prompt=system_prompt,
                 response_format=response_format,
+                parallel_tool_calls=False if tools else None,
             )
         except Exception as exc:
             raise ToolExecutionError(f"provider call failed: {exc}", calls=calls) from exc

@@ -48,6 +48,7 @@ class MockProvider:
         tool_results: Sequence[Mapping[str, Any]] = (),
         system_prompt: str | None = None,
         response_format: Mapping[str, Any] | None = None,
+        parallel_tool_calls: bool | None = None,
     ) -> CompletionResponse:
         self.calls.append((prompt, model))
         self.tool_results.append(tuple(tool_results))

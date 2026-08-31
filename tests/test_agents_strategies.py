@@ -1,8 +1,9 @@
+import math
 from types import SimpleNamespace
 
 from adaptive_router.agents.direct import DirectStrategy
 from adaptive_router.agents.strong import StrongStrategy
-from adaptive_router.agents.tool import ToolStrategy
+from adaptive_router.agents.tool import ToolStrategy, calculate
 from adaptive_router.models import EvaluationType, Task, TaskCategory
 from adaptive_router.providers.base import CompletionResponse, ToolCall
 from adaptive_router.providers.mock import MockProvider
@@ -11,6 +12,25 @@ from adaptive_router.providers.openai import OpenAICompatibleProvider
 
 def task(prompt="What is 2 + 2?"):
     return SimpleNamespace(id="t1", prompt=prompt)
+
+
+def test_calculator_supports_mean_and_population_standard_deviation():
+    values = "[14, 22, 9, 31, 18, 27, 11, 25, 19, 34]"
+
+    assert calculate(f"mean({values})") == 21.0
+    assert math.isclose(
+        calculate(f"population_stddev({values})"),
+        7.92464510246358,
+    )
+
+
+def test_calculator_rejects_unallowlisted_functions():
+    try:
+        calculate("sqrt(4)")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("calculator accepted an unallowlisted function")
 
 
 def test_direct_and_strong_share_execution_shape_but_use_configured_models():

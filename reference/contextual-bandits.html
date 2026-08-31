@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contextual Bandits — Quick Reference</title>
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<main>
+  <div class="eyebrow">Quick reference</div>
+  <h1>Contextual bandits</h1>
+  <p class="lede">A contextual bandit makes one action choice using the current context, observes feedback for that chosen action, and improves future choices.</p>
+
+  <div class="code">x_t = current context
+ a_t = chosen action
+ r_t = observed reward
+
+choose:  a_t = policy(x_t)
+learn:   policy ← policy + feedback(x_t, a_t, r_t)</div>
+
+  <h2>Three levels</h2>
+  <div class="grid">
+    <section class="card"><h3>Multi-armed bandit</h3><p>No context. Learn one average value per arm.</p></section>
+    <section class="card"><h3>Contextual bandit</h3><p>Use context. Learn which arm fits this situation.</p></section>
+    <section class="card"><h3>Full RL</h3><p>Actions change future states and can produce delayed rewards.</p></section>
+  </div>
+
+  <h2>Router translation</h2>
+  <div class="grid">
+    <section class="card"><h3>Context</h3><p>Category, prompt length, numbers, and requested fields.</p></section>
+    <section class="card"><h3>Actions</h3><p><code>direct</code>, <code>strong</code>, and <code>tool</code>.</p></section>
+    <section class="card"><h3>Feedback</h3><p>Quality, cost, latency, and the derived reward.</p></section>
+  </div>
+
+  <h2>Algorithm memory hooks</h2>
+  <ul>
+    <li><strong>Epsilon-greedy:</strong> randomly explore with probability ε; otherwise exploit the best average action.</li>
+    <li><strong>UCB:</strong> estimated value plus an uncertainty bonus.</li>
+    <li><strong>LinUCB:</strong> predicted linear reward plus a context-dependent confidence bonus.</li>
+  </ul>
+
+  <p><a href="../lessons/0001-why-contextual-bandit.html">Return to lesson 1</a> · <a href="../MISSION.md">Mission</a> · <a href="../RESOURCES.md">Resources</a></p>
+</main>
+</body>
+</html>
